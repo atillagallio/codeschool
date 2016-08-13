@@ -1,0 +1,76 @@
+
+#content-area {
+    main > * {
+        background-color: white;
+        color: black;
+        padding: 10px;
+    }
+
+    main > *:nth-child(odd) {
+        background-color: $color-yellow;
+        color: white;
+    }
+}
+
+@media only screen and (min-width: $medium-screen) {
+    #content-area {
+        display: flex;
+        flex-direction: row-reverse;
+
+        main > * {
+            padding: 20px 20px 20px 30px;
+        }
+
+        main {
+            flex-grow: 1;
+        }
+
+        cs-nav {
+            flex-grow: 0;
+        }
+    }
+}
+
+@media only screen and (min-width: $large-screen) {
+    #content-area main > * {
+        padding-left: 40px;
+    }
+}
+
+.content-cards {
+    aside > p {
+        display: none
+    }
+
+    @media only screen and (min-width: $medium-screen) {
+        display: flex;
+        flex-direction: row;
+
+        & > aside > p {
+            display: block
+        }
+
+        & > aside {
+            width: 30%;
+        }
+
+        & > article {
+            margin-left: 30px;
+            flex-grow: 1;
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: space-between;
+            align-items: stretch;
+        }
+
+        & > article > * {
+            flex: 1 1 30%;
+        }
+    }
+
+    @media only screen and (min-width: $large-screen) {
+        & > article {
+            margin-left: 60px;
+        }
+    }
+}

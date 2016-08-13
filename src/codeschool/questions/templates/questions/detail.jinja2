@@ -1,0 +1,46 @@
+{% extends "page.jinja2" %}
+{% from "questions/macros.jinja2" import feedback_styles, nav_sections %}
+{% if form_name is undefined %}{% set form_name='form' %}{% endif %}
+
+
+{% block content_head %}
+    {{ super() }}
+    <p>{{ question.short_description }}</p>
+{% endblock %}
+
+{% block content_body %}
+    <h2 class="banner">{{ _('Description') }}</h2>
+    <article class="question-stem">
+        {{ question.body }}
+    </article>
+
+    {% if form is defined %}
+        <form method="POST" id="{{ form_name|default('form') }}" srvice-bind="./submit-response">
+            {% csrf_token %}
+            {% if context %}
+                <input type="hidden" name="response_context" value="{{ context.pk }}">
+            {% endif %}
+            {% block response_form %}
+                <h2 class="banner">{{ _('Response') }}</h2>
+                <table class="form">{{ form.as_table() }}</table>
+            {% endblock %}
+        </form>
+
+        <div class="toolbar highlight">
+            <button class="mdl-button mdl-js-button"
+                    form="{{ form_name|default('form') }}">
+                {{ _('Send') }}
+            </button>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block nav_sections %}
+    {{ nav_sections(page, session_title=_('Question')) }}
+    {{ super() }}
+{% endblock %}
+
+{% block style %}
+    {{ super() }}
+    {{ feedback_styles() }}
+{% endblock %}

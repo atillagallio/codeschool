@@ -1,0 +1,44 @@
+{% extends "page-list.jinja2" %}
+
+{% block empty_list %}
+    <cs-card icon="do_not_disturb" faded>
+        <h1>{{ _('Empty') }}</h1>
+        <p>{{ _('No section found') }}</p>
+    </cs-card>
+{% endblock %}
+
+{% block object_list %}
+    {% for activity in object_list %}
+        <cs-card icon="{{ activity.material_icon }}"
+                 href="./{{ activity.slug }}/">
+            <h1>{{ activity.title }}</h1>
+            <p>{{ activity.short_description|markdown }}</p>
+        </cs-card>
+    {% endfor %}
+{% endblock %}
+
+{% block content %}
+    <section class="content-cards">
+        <aside>
+            <h1>{{ _('Activities') }}</h1>
+            <p>{{ _('List of activities') }}</p>
+        </aside>
+
+        <article>
+            {{ self.content_body() }}
+        </article>
+    </section>
+
+    <section class="content-cards">
+        <aside>
+            <h1>{{ _('Leaderbord') }}</h1>
+            <p>{{ _('Check your progress') }}</p>
+        </aside>
+
+        <article>
+            Under construction!
+        </article>
+    </section>
+{% endblock %}
+
+

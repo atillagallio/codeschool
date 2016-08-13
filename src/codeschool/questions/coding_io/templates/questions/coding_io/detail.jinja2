@@ -1,0 +1,39 @@
+{% extends "questions/detail.jinja2" %}
+
+{% block object_detail_dl %}
+    <dl>
+        <dt>{{ _('Maximum runtime') }}</dt>
+        <dd>{{ gettext('%(time)s seconds', time=question.timeout) }}</dd>
+    </dl>
+{% endblock %}
+
+{% block response_form %}
+    <h2 class="banner">{{ _('Response') }}</h2>
+    <div class="code-area mdl-shadow--4dp">
+        <div class="select">
+            <p>Programming language
+                <select id="language-select" name="language">
+                    <option>-----</option>
+                    {% for language in languages %}
+                        <option value="{{ language.ref }}" data-ace="{{ language.ace_mode() }}">{{ language }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+        </div>
+        <ace-editor mode="{{ default_mode }}" name="source" id="code-editor"></ace-editor>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    {{ super() }}
+
+    <script>
+        $(function() {
+            var editor = $('#code-editor')[0];
+            $('#language-select').on("change", function() {
+                var mode = $('#language-select').find(":selected").attr('data-ace');
+                editor.mode = mode;
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,152 @@
+<!--link rel="import" href="../../bower_components/polymer/polymer.html"-->
+<dom-module id="ace-editor">
+    <template>
+        <textarea id="textarea" style="display: none;" name="{{ name }}" form="{{ form }}"></textarea>
+        <div id="editor"><content></content></div>
+    </template>
+
+    <style>
+        #editor {
+            height: 25em;
+            font-size: 1em;
+        }
+    </style>
+
+    <script>
+        HTMLImports.whenReady(
+            AceEditorElement = Polymer({
+                is: 'ace-editor',
+                properties: {
+                    mode: {
+                        type: String,
+                        value: 'javascript',
+                        observer: '_onModeChanged',
+                        reflectToAttribute: true
+                    },
+                    theme: {
+                        type: String,
+                        value: 'xcode',
+                        observer: '_onThemeChanged',
+                        reflectToAttribute: true
+                    },
+                    readOnly: {
+                        type: Boolean,
+                        value: false,
+                        observer: '_onReadOnlyChanged',
+                        reflectToAttribute: true
+                    },
+                    tabSize: {
+                        type: Number,
+                        value: 4,
+                        observer: '_onTabSizeChanged',
+                        reflectToAttribute: true
+                    },
+                    softTabs: {
+                        type: Boolean,
+                        value: false,
+                        observer: '_onSoftTabsChanged',
+                        reflectToAttribute: true
+                    },
+                    wrapMode: {
+                        type: Boolean,
+                        value: false,
+                        observer: '_onWrapModeChanged',
+                        reflectToAttribute: true
+                    },
+                    highlightActiveLine: {
+                        type: Boolean,
+                        value: false,
+                        observer: '_onHighlightActiveLineChanged',
+                        reflectToAttribute: true
+                    },
+                    showPrintMargin: {
+                        type: Boolean,
+                        value: false,
+                        observer: '_onShowPrintMarginChanged',
+                        reflectToAttribute: true
+                    },
+                    name: {
+                        type: String,
+                        reflectToAttribute: true
+                    },
+                    form: {
+                        type: String,
+                        readOnly: true,
+                        reflectToAttribute: true
+                    }
+                },
+
+                hostAttributes: {
+                    // Hash with default value for HTML attributes
+                },
+
+                ready: function () {
+                    var elem = this;
+                    
+                    require(['ace/ace'], function(ace) {
+                        elem.ace = ace.edit(elem.$.editor);
+                        elem.ace.resize();
+                        elem.find = elem.ace.find;
+                        elem.replace = elem.ace.replace;
+                        elem.replaceAll = elem.ace.replaceAll;
+                        elem.commands = elem.ace.commands;
+
+                        // Trigger observers to set default values
+                        elem._onModeChanged(elem.mode);
+                        elem._onThemeChanged(elem.theme);
+                        elem._onReadOnlyChanged(elem.readOnly);
+                        elem._onTabSizeChanged(elem.tabSize);
+                        elem._onSoftTabsChanged(elem.softTabs);
+                        elem._onWrapModeChanged(elem.wrapMode);
+                        elem._onHighlightActiveLineChanged(elem.highlightActiveLine);
+                        elem._onShowPrintMarginChanged(elem.showPrintMargin);
+
+                        // Connect submit event of an eventual parent form
+                        var textarea = elem.getTextarea();
+                        textarea.value = '';
+                        var form = (elem.form? $('#' + elem.form): $(textarea).closest('form'))[0];
+
+                        if (form) {
+                            form.addEventListener('submit', function() {
+                                $(textarea).val(elem.getValue());
+                            }, true);
+                        }
+                    });
+                },
+
+                setValue: function(value) {
+                    return this.ace.setValue(value);
+                },
+
+                getValue: function() {
+                    return this.ace.getValue();
+                },
+
+                getTextarea: function() {
+                    return this.$.textarea;
+                },
+
+                getMode: function() {
+                    return this.mode;
+                },
+
+                setMode: function(mode) {
+                    this.mode = mode;
+                },
+
+                // Observers
+                _onModeChanged:                 function(value) {this.ace && this.ace.getSession().setMode("ace/mode/" + value)},
+                _onThemeChanged:                function(value) {this.ace && this.ace.setTheme("ace/theme/" + value)},
+                _onReadOnlyChanged:             function(value) {this.ace && this.ace.setReadOnly(value)},
+                _onTabSizeChanged:              function(value) {this.ace && this.ace.getSession().setTabSize(value)},
+                _onSoftTabsChanged:             function(value) {this.ace && this.ace.getSession().setUseSoftTabs(value)},
+                _onWrapModeChanged:             function(value) {this.ace && this.ace.getSession().setUseWrapMode(value)},
+                _onHighlightActiveLineChanged:  function(value) {this.ace && this.ace.setHighlightActiveLine(value)},
+                _onShowPrintMarginChanged:      function(value) {this.ace && this.ace.setShowPrintMargin(value)},
+            })
+        );
+    </script>
+</dom-module>
+
+
+
