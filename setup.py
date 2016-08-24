@@ -67,7 +67,7 @@ setup(
         # 'pytz',
 
         # Django and extensions
-        'django>=1.9',
+        'django<1.10',
         'django-model-utils',
         'django-model-reference',
         'django-picklefield',
