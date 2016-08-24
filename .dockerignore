@@ -8,16 +8,19 @@ __pycache__/
 *.egg
 *.egg-info/
 
-# Build directories
-doc/_build/
-build/
-dist/
-collect/
-db/
-node_modules/
-src/codeschool/site/bower/
+# Non-required directories
 .cache/
 .gitignore
 .idea/
-docs/_build/
-docker-image/
+docs/
+db/
+docker/
+artwork/
+
+# Build directories
+build/
+dist/
+node_modules/
+src/codeschool/site/bower/
+src/codeschool/site/static/
+src/codeschool/site/static_src/
