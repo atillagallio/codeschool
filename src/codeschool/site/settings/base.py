@@ -82,13 +82,6 @@ INSTALLED_APPS = [
     'userena',
     'social.apps.django_app.default',
     'polymorphic',
-    'actstream',
-    'notifications',
-    'django_comments',
-    'django_comments_xtd',
-
-    #TODO: fork, implement support for django 1.9, and include here
-    #'relationships',
 
     # Django
     'django.contrib.admin',
