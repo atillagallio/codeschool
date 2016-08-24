@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('wagtailcore', '0002_initial_data'),
+        ('wagtailcore', '0028_merge'),
     ]
 
     operations = [

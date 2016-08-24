@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('wagtailcore', '0030_auto_20160806_1503'),
+        ('wagtailcore', '0028_merge'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
