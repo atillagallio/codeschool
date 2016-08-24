@@ -51,6 +51,7 @@ setup(
         # Non-django dependencies
         'lazyutils>=0.3.1',
         'Markdown',
+        'mistune',
         'bleach',
         'PyYAML',
         'fake-factory',

@@ -27163,6 +27163,10 @@ style this element.
                             form.addEventListener('submit', function() {
                                 $(textarea).val(elem.getValue());
                             }, true);
+
+                            $(elem.ace.getSession()).on('change', function(){
+                              $(textarea).val(elem.ace.getSession().getValue());
+                            });
                         }
                     });
                 },

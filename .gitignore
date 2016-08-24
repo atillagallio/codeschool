@@ -14,7 +14,9 @@ __pycache__/
 build/
 dist/
 collect/
-db/
 node_modules/
 src/codeschool/site/bower/
 docs/_build/
+
+# Database
+db/db.sqlite3
