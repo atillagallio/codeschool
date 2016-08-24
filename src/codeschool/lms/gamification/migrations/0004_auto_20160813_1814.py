@@ -10,7 +10,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('wagtailcore', '0030_auto_20160806_1503'),
+        ('wagtailcore', '0028_merge'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('gamification', '0003_auto_20160812_2100'),
     ]
