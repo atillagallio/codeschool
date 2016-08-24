@@ -1,5 +1,4 @@
 from codeschool import models
-import secretballot
 
 
 class MonkeyPatcher:

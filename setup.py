@@ -52,20 +52,19 @@ setup(
         'lazyutils>=0.3.1',
         'Markdown',
         'mistune',
-        'bleach',
         'PyYAML',
         'fake-factory',
         'factory-boy',
         'mommys_boy',
-        'gunicorn',
-        'pygments',
         'python-social-auth',
-        # 'frozendict',
-        # 'csscompressor',
-        # 'html5lib',
-        # 'slimit',
-        # 'pygeneric',
-        # 'pytz',
+        'pygments',
+        'html5lib',
+        'bleach',
+        'pygeneric',
+
+        # Services
+        'gunicorn',
+        'invoke',
 
         # Django and extensions
         'django<1.10',
@@ -75,39 +74,22 @@ setup(
         'django-jsonfield',
         'django-annoying',
         'django-activity-stream',
-        #'django-autoslug',
         'django-compressor',
-        #'django-extensions',
-        #'django-guardian',
-        #'django-bower',
         'django-userena',
         'django-polymorphic',
-        #'django-filter',
-        #'djangorestframework',
-        #'jsonfield',
 
         # Wagtail
         'wagtail',
         'wagtail-model-tools',
-        # 'wagtailfontawesome',
-        # 'wagtailgmaps',
-        # 'wagtailosm',
 
         # Jinja support
         'jinja2',
-        #'django_jinja',
         'djinga',
-        #'jinja2-django-tags',
-
-        # 'ejudge', (vendorized)
-        #'boxed>=0.3',
-        #'psutil',
-        #'pexpect',
 
         # CodingIo question libraries
         'markio',
-        'iospec>=0.3',
-        'ejudge>=0.5',
+        'iospec>=0.3.1',
+        'ejudge>=0.5.2',
         'boxed',
 
         # Related libraries
