@@ -1,3 +1,5 @@
 from django.contrib import admin
+from codeschool.core.models import ProgrammingLanguage
 
-# Register your models here.
+
+admin.register(ProgrammingLanguage)
