@@ -1,1 +1,1 @@
-require('./wagtailadmin/scss/page-editor.scss');
+require('./wagtailadmin/scss/home.scss');

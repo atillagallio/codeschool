@@ -663,22 +663,18 @@ input[type=reset].flat {
 }
 
 ///* Form table layout */
-.form tr,
-form tr{
+table.form tr {
     display: flex;
     flex-flow: column;
 }
 
-.form td,
-.form th,
-form td,
-form th {
+table.form td,
+table.form th {
     padding: 8px;
     vertical-align: top;
 }
 
-.form th,
-form th {
+table.form th {
     font-weight: 500;
     color: $color-grey-1;
     text-align: left;
@@ -686,13 +682,12 @@ form th {
     min-width: 150px;
 }
 
-.form td,
-form td {
+table.form td {
     padding-top: 0;
     width: 100%;
 }
 
-.form textarea,
+table.form textarea,
 form table textarea {
     box-sizing: border-box;
     width: 100%;
@@ -700,19 +695,16 @@ form table textarea {
 }
 
 @media all and (min-width: $medium-screen) {
-    .form tr,
-    form tr {
+    table.form tr {
         display: table-row;
     }
 
-    .form th,
-    form th {
+    table.form th {
         text-align: right;
         padding-bottom: 8px;
     }
 
-    .form td,
-    form td {
+    table.form td {
         padding-top: 8px;
     }
 }

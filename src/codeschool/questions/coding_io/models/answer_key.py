@@ -2,6 +2,7 @@ import collections
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+from django.utils.html import escape
 from iospec import parse_string as parse_iospec
 from lazyutils import lazy
 
@@ -36,6 +37,17 @@ class AnswerKeyQueryset(models.QuerySet):
         """
         #TODO: implement
         raise NotImplementedError
+
+    def has_program(self):
+        """
+        Return true if some source code program is defined for the given
+        queryset.
+        """
+
+        for src in self.values_list('source', flat=True):
+            if src:
+                return True
+        return False
 
 
 class AnswerKey(models.Model):
@@ -169,12 +181,16 @@ class AnswerKey(models.Model):
 
         # Check if the result has runtime or build errors
         if result.has_errors:
-            error = {'error': result.get_error_message()}
-            raise ValidationError({
-                'source': mark_safe(_(
-                    '"%(error)s" produced when running the source code.'
-                ) % error)
-            })
+            for testcase in iospec:
+                result = run_code(source, testcase, language)
+                if result.has_errors:
+                    error_dic = {
+                        'error': escape(result.get_error_message()),
+                        'iospec': escape(testcase.source())
+                    }
+                    raise ValidationError({
+                        'source': mark_safe(ERROR_TEMPLATE % error_dic)
+                    })
 
         # The source may run fine, but still give results that are inconsistent
         # with the given testcases. This will only be noticed if the user
@@ -242,7 +258,7 @@ class AnswerKey(models.Model):
 
 class RelatedAnswerKeyManager(collections.Mapping, models.RelatedManagerExt):
     """
-    A related manager to be used in the 'answers' attribute of CodiongIoQuestion
+    A related manager to be used in the 'answers' attribute of CodingIoQuestion
     instances.
     """
 
@@ -257,6 +273,23 @@ class RelatedAnswerKeyManager(collections.Mapping, models.RelatedManagerExt):
 
     def __len__(self):
         return self.count()
+
+    def has_program(self):
+        """
+        Return true if some source code program is defined for the given
+        queryset.
+        """
+
+        from pprint import pprint as print
+        print(self.instance.__dict__)
+        print(self.all())
+        print(self.get_object_list())
+        print(self.get_live_queryset())
+
+        for src in self.values_list('source', flat=True):
+            if src:
+                return True
+        return False
 
     def get(self, language, default=_NOT_GIVEN):
         if default is self._NOT_GIVEN:
@@ -313,3 +346,16 @@ class RelatedAnswerKeyManager(collections.Mapping, models.RelatedManagerExt):
                 return iospec
 
 CodingIoQuestion.answers = RelatedAnswerKeyManager(CodingIoQuestion.answers)
+
+
+#
+# Constants
+#
+ERROR_TEMPLATE = _("""
+Errors produced when executing program with code</p>
+<pre class="error-message" style="margin-left: 2em">%(iospec)s</pre>
+
+<p class="error-message">Error message:
+<pre class="error-message" style="margin-left: 2em">%(error)s</pre>
+<p class="hidden">
+""")

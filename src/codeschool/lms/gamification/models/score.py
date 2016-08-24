@@ -1,6 +1,7 @@
 from collections import Counter
 from time import time
 
+from decimal import Decimal
 from django.utils.translation import ugettext_lazy as _
 from lazyutils import lazy, lazy_classattribute
 
@@ -98,7 +99,7 @@ class ScoreHandler(models.TimeStampedModel):
 
     page = models.ForeignKey(models.Page, related_name='+')
     points = models.IntegerField(default=0)
-    stars = models.FloatField(default=0.0)
+    stars = models.DecimalField(default=Decimal(0), decimal_places=1, max_digits=5)
 
     @lazy_classattribute
     def _wagtail_root(cls):
@@ -122,29 +123,32 @@ class ScoreHandler(models.TimeStampedModel):
 
         raise NotImplementedError('must be implemented in subclasses')
 
-    def set_diff(self, points=0, stars=0, propagate=True, commit=True):
+    def set_diff(self, points=0, stars=0, propagate=True, commit=True,
+                 optimistic=False):
         """
         Change the given resources by the given amounts and propagate to all
         the parents.
         """
 
         # Update fields
-        fields = []
-        if points:
-            fields.append('points')
+        kwargs = {}
+        if points and (points > 0 or not optimistic):
             self.points += points
-        if stars:
+            kwargs['points'] = points
+        if stars and (stars > 0 or not optimistic):
             self.stars += stars
-            fields.append('stars')
+            kwargs['stars'] = stars
 
-        if fields and commit:
-            self.save(update_fields=fields)
+        if kwargs and commit:
+            self.save(update_fields=kwargs.keys())
 
         # Propagate to all parent resources
-        if propagate and fields and commit:
+        if propagate and kwargs and commit:
             parent = self.get_parent()
+            kwargs['commit'] = True
+            kwargs['propagate'] = True
             if parent is not None:
-                parent.set_diff(points=points, star=stars, propagate=propagate)
+                parent.set_diff(optimistic=False, **kwargs)
 
     def set_values(self, points=0, stars=0, propagate=True, optimistic=False,
                    commit=True):
@@ -167,13 +171,10 @@ class ScoreHandler(models.TimeStampedModel):
         """
 
         d_points = points - self.points
-        d_stars = stars - self.stars
-        if optimistic:
-            d_points = max(d_points, 0)
-            d_stars = max(d_stars, 0)
+        d_stars = Decimal(stars) - self.stars
 
         self.set_diff(points=d_points, stars=d_stars, propagate=propagate,
-                      commit=commit)
+                      commit=commit, optimistic=optimistic)
 
 
 class TotalScore(ScoreHandler):
@@ -263,7 +264,11 @@ class UserScore(ScoreHandler):
     class Meta:
         unique_together = [('user', 'page')]
 
-    used_stars = models.FloatField(default=0.0)
+    used_stars = models.DecimalField(
+        default=0.0,
+        decimal_places=1,
+        max_digits=5
+    )
     user = models.ForeignKey(models.User, related_name='+')
 
     @property
@@ -283,7 +288,7 @@ class UserScore(ScoreHandler):
         return score
 
     @classmethod
-    def update(cls, user, page, **kwargs):
+    def update(cls, user, page, diff=False, **kwargs):
         """
         Updates the accumulated resources of the given user/page pair.
 
@@ -291,7 +296,10 @@ class UserScore(ScoreHandler):
         """
 
         score = cls.load(user, page)
-        score.set_values(**kwargs)
+        if diff:
+            score.set_diff(**kwargs)
+        else:
+            score.set_values(**kwargs)
 
     @classmethod
     def total_score(cls, user):
@@ -382,8 +390,10 @@ class HasScorePage(models.Page):
             'ranking system.'
         )
     )
-    stars_total = models.FloatField(
+    stars_total = models.DecimalField(
         _('stars'),
+        decimal_places=1,
+        max_digits=5,
         blank=True,
         help_text=_(
             'Number of stars the activity is worth (fractional stars are '
@@ -403,18 +413,16 @@ class HasScorePage(models.Page):
         if not kwargs:
             self._score_memo = self.points_total, self.stars_total
 
-    def clean_fields(self, exclude=None):
+    def clean(self):
         # Fill default difficulty
         if self.difficulty is None:
-            if exclude is None or 'difficulty' not in exclude:
-                self.difficulty = self.DEFAULT_DIFFICULTY
+            self.difficulty = self.DEFAULT_DIFFICULTY
 
         # Fill default points value from difficulty
         if self.points_total is None:
-            if exclude is None or 'exclude' not in exclude:
-                self.points_total = self.SCORE_FROM_DIFFICULTY[self.difficulty]
+            self.points_total = self.SCORE_FROM_DIFFICULTY[self.difficulty]
 
-        super().clean_fields(exclude=exclude)
+        super().clean()
 
     def save(self, *args, **kwargs):
         scores = getattr(self, '_score_memo', (0, 0))

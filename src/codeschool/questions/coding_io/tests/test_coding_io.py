@@ -1,5 +1,8 @@
 from codeschool.questions.coding_io.tests import *
-#from codeschool.questions.tests.generic import *
+from codeschool.questions.tests.generic import *
+
+
+
 
 
 # #

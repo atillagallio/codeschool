@@ -1,3 +1,16 @@
+
+from codeschool.questions.tests import *
+from codeschool.questions.coding_io.models import CodingIoQuestion
+
+
+@pytest.fixture
+def question():
+    return CodingIoQuestion(
+        title=fake.sentence()[:-1],
+        short_description=fake.sentence(),
+        iospec_source='<foo>\nhello foo!',
+    )
+
 # import iospec
 # from cs_core.tests import *
 # from cs_questions.factories import *

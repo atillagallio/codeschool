@@ -18,13 +18,13 @@
         outline: none;
         text-transform: uppercase;
         font-weight: 700;
-        font-size: 1.2em;
+        font-size: 1em;
         text-decoration: none;
         display: block;
         padding: 0.7em;
         color: $color-white;
         border-top: 0.3em solid lighten($color-element-highlight-darker, 3%);
-        max-height: 1.2em;
+        max-height: 3.0em;
         overflow: hidden;
 
         &:hover {

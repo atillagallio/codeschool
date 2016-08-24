@@ -10,8 +10,9 @@ from lazyutils import delegate_to
 from markdown import markdown
 
 from codeschool import models
-from codeschool.lms.activities.models import Response
-from codeschool.lms.activities.signals import submission_graded_signal
+
+from ..signals import submission_graded_signal
+from .response import Response
 from .mixins import ResponseDataMixin, FeedbackDataMixin
 
 
@@ -28,6 +29,30 @@ class SubmissionQuerySet(models.PolymorphicQuerySet):
         """
 
         return self.filter(response__user=user)
+
+    def best(self, attrs=('given_grade', 'score', 'stars', 'final_grade')):
+        """
+        Return the best submission in the queryset.
+
+        Submissions are ranked lexicographically: first we consider the
+        given_grade, than score, stars, final_grade, and lastly, creation time
+        (earlier submissions are ranked better).
+        """
+
+        qs = self.filter(status=Submission.STATUS_DONE)
+        if qs.empty():
+            return None
+
+        # Filter by regular attributes: higher values are better
+        for attr in attrs:
+            qs = qs.order_by('-' + attr)
+            best_value = getattr(qs.first(), attr)
+            qs = qs.filter(**{attr: best_value})
+            if qs.count() == 1:
+                return qs.first()
+
+        # Filter by creation date
+        return qs.order_by('created').first()
 
 
 class _SubmissionManager(models.PolymorphicManager):
@@ -266,6 +291,38 @@ class Submission(ResponseDataMixin,
                 self.response_hash)
         super().save(*args, **kwargs)
 
+    def final_points(self):
+        """
+        Return the amount of points awarded to the submission after
+        considering all penalties and bonuses.
+        """
+
+        return self.points
+
+    def final_stars(self):
+        """
+        Return the amount of stars awarded to the submission after
+        considering all penalties and bonuses.
+        """
+
+        return self.stars
+
+    def given_stars(self):
+        """
+        Compute the number of stars that should be awarded to the submission
+        without taking into account bonuses and penalties.
+        """
+
+        return self.stars_total * (self.given_grade / 100)
+
+    def given_points(self):
+        """
+        Compute the number of points that should be awarded to the submission
+        without taking into account bonuses and penalties.
+        """
+
+        return int(self.points_total * (self.given_grade / 100))
+
     def feedback(self, commit=True, force=False, silent=False):
         """
         Return the feedback object associated to the given response.
@@ -306,14 +363,15 @@ class Submission(ResponseDataMixin,
                 graded. The default behavior is to ignore autograde from a
                 graded submission.
             silent:
-                Prevents the autograde_signal from triggering in the end of
-                a successful autograde.
+                Prevents the submission_graded_signal from triggering in the
+                end of a successful grading.
         """
 
         if self.status == self.STATUS_PENDING or force:
+            # Evaluate grade using the autograde_value() method of subclass.
             try:
                 value = self.autograde_value()
-            except self.InvalidResponseError as ex:
+            except self.InvalidSubmissionError as ex:
                 self.status = self.STATUS_INVALID
                 self.feedback_data = ex
                 self.given_grade = self.final_grade = decimal.Decimal(0)
@@ -321,24 +379,39 @@ class Submission(ResponseDataMixin,
                     self.save()
                 raise
 
+            # If no value is returned, change to STATUS_WAITING. This probably
+            # means that response is partial and we need other submissions to
+            # complete the final response
             if value is None:
                 self.status = self.STATUS_WAITING
+
+            # A regular submission has a decimal grade value. We save it and
+            # change state to STATUS_DONE
             else:
                 self.given_grade = decimal.Decimal(value)
                 if self.final_grade is None:
                     self.final_grade = self.given_grade
                 self.status = self.STATUS_DONE
-                if not silent:
-                    submission_graded_signal.send(
-                        self.__class__,
-                        response_item=self,
-                        given_grade=self.given_grade
-                    )
+
+            # Commit results
             if commit and self.pk:
                 self.save(update_fields=['status', 'feedback_data',
                                          'given_grade', 'final_grade'])
             elif commit:
                 self.save()
+
+            # If STATUS_DONE, we submit the submission_graded signal.
+            if self.status == self.STATUS_DONE:
+                self.stars = self.given_stars()
+                self.points = self.given_points()
+                self.response.register_submission(self)
+                if not silent:
+                    submission_graded_signal.send(
+                        Submission,
+                        submission=self,
+                        given_grade=self.given_grade,
+                        automatic=True,
+                    )
 
         elif self.status == self.STATUS_INVALID:
             raise self.feedback_data
@@ -357,8 +430,8 @@ class Submission(ResponseDataMixin,
             raises:
                 If submission has already been graded, raises a GradingError.
             silent:
-                Prevents the manual_grade_signal from triggering in the end of
-                a successful autograde.
+                Prevents the submission_graded_signal from triggering in the
+                end of a successful grading.
         """
 
         if self.status != self.STATUS_PENDING and raises:
@@ -455,12 +528,11 @@ class Submission(ResponseDataMixin,
             raise ValueError('invalid method: %s' % method)
 
 
-class InvalidResponseError(Exception):
+class InvalidSubmissionError(Exception):
     """Raised by compute_response() when the response is invalid."""
 
-
 # Save a copy in the class namespace for convenience
-Submission.InvalidResponseError = InvalidResponseError
+Submission.InvalidSubmissionError = InvalidSubmissionError
 
 
 def md5hash(st):

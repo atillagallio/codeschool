@@ -89,11 +89,12 @@ class Response(models.CopyMixin,
         blank=True,
         null=True,
     )
-    given_points = models.IntegerField(default=0)
-    given_score = models.IntegerField(default=0)
-    given_stars = models.FloatField(default=0.0)
+    points = models.IntegerField(default=0)
+    score = models.IntegerField(default=0)
+    stars = models.FloatField(default=0.0)
     is_finished = models.BooleanField(default=bool)
     is_correct = models.BooleanField(default=bool)
+    objects = ResponseManager()
 
     #: The number of submissions in the current session.
     num_submissions = property(lambda x: x.submissions.count())
@@ -105,8 +106,6 @@ class Response(models.CopyMixin,
     @activity.setter
     def activity(self, value):
         self.activity_page = value.page_ptr
-
-    objects = ResponseManager()
 
     @classmethod
     def _get_response(cls, user, activity):
@@ -136,6 +135,9 @@ class Response(models.CopyMixin,
         fmt = '<%s: %s by %s (%s, %s tries)>'
         return fmt % (class_name, activity, user, grade, tries)
 
+    def __str__(self):
+        return repr(self)
+
     def __hash__(self):
         return hash(self.id)
 
@@ -147,46 +149,31 @@ class Response(models.CopyMixin,
                 return self.pk == other.pk
         return NotImplemented
 
-    def update(self, force=False):
-        """
-        Synchronize object so its state accounts for the latest responses.
-        """
-
-        return
-
-        if not self.__updated or self.final_grade is None or force:
-            # We check if any response_item was updated after the main response
-            # object. If so, we recompute the grades using the maximum grade
-            # criterion
-            # TODO: in the future we should use grading_method
-            changed_items = self.items.filter(modified__gte=self.modified)
-            if changed_items or True:
-                grades = self.items.values_list('final_grade', flat=True)
-                grades = [grade for grade in grades if grade]
-                self.final_grade = max(grades, default=self.final_grade or 0)
-                self.save(update_fields=['final_grade'])
-            elif self.final_grade is None:
-                self.final_grade = 0.0
-                self.save(update_fields=['final_grade'])
-            self.__updated = True
-
     def register_submission(self, submission):
         """
-        Called when new submissions are sent or auto-graded.
+        This method is called when a submission is graded.
         """
 
-    def best_submission(self):
-        """
-        Return the best response item associated with the response.
-        """
+        assert submission.response_id == self.id
 
-        if self.items.count():
-            best = self.items.order_by('-final_grade')[0]
-            if best.final_grade == 0:
-                return None
-            best_set = self.items.filter(final_grade=best.final_grade)
-            return best_set.order_by('created').first()
-        return None
+        # Register points and stars associated with submission.
+        score_kwargs = {}
+        final_points = submission.final_points()
+        final_stars = submission.final_stars()
+        if final_points > self.points:
+            score_kwargs['points'] = final_points - self.points
+            self.points = final_points
+        if final_stars > self.stars:
+            score_kwargs['stars'] = final_stars - self.stars
+            self.stars = final_stars
+
+        # If some score has changed, we save the update fields and update the
+        # corresponding UserScore object
+        if score_kwargs:
+            from codeschool.lms.gamification.models import UserScore
+            self.save(update_fields=score_kwargs.keys())
+            score_kwargs['diff'] = True
+            UserScore.update(self.user, self.activity_page, **score_kwargs)
 
     def regrade(self, method=None, force_update=False):
         """

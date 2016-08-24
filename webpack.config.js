@@ -1,11 +1,13 @@
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
-var ModernizrWebpackPlugin = require('modernizr-webpack-plugin');
+//var ModernizrWebpackPlugin = require('modernizr-webpack-plugin');
 var webpack = require("webpack");
 
 module.exports = {
     entry: {
         main: "./src/codeschool/site/static_src/entry.js",
-        wagtailadmin: "./src/codeschool/site/static_src/entry-wagtail.js"
+        wagtailadmin: "./src/codeschool/site/static_src/entry-wagtail.js",
+        wagtailpageeditor: "./src/codeschool/site/static_src/entry-wagtail-page-editor.js",
+        wagtailhome: "./src/codeschool/site/static_src/entry-wagtail-home.js"
     },
     output: {
         path: __dirname + '/src/codeschool/site/static/',

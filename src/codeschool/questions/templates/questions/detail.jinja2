@@ -50,7 +50,7 @@
 {% endblock %}
 
 {% block nav_sections %}
-    {{ nav_sections(page, session_title=_('Question')) }}
+    {{ nav_sections(page, session_title=_('Question'), user=user) }}
     {{ super() }}
 {% endblock %}
 

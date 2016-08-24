@@ -153,6 +153,11 @@ ul.listing {
     }
 
     // specific columns
+    th.children,
+    th.ord {
+
+    }
+
     .bulk {
         padding-right: 0;
 
@@ -216,7 +221,7 @@ ul.listing {
 
     .button-secondary {
         border-color: $color-grey-3;
-        background: $color-white;
+        background: lighten($color-element-highlight, 10);
 
         &:hover {
             border-color: $color-element-highlight;
@@ -280,13 +285,16 @@ ul.listing {
         font-size: 30px;
     }
 
+    .ord {
+        max-width: 30px;
+    }
+
     th.ord,
     &.full-width th:first-child.ord {
         padding-left: 10px;
     }
 
     th.ord a:before {
-        width: 1em;
         font-size: 15px;
     }
 
@@ -366,9 +374,9 @@ ul.listing {
         }
 
         .button {
-            background-color: $color-white;
-            color: $color-element-highlight;
-            border-color: $color-element-highlight;
+            background-color: $color-element-highlight;
+            color: $color-grey-3;
+            border-color: $color-element-highlight-darker;
 
             &:hover {
                 color: $color-white;
@@ -454,8 +462,8 @@ table.listing {
         }
 
         .button {
-            background-color: transparent;
-            color: $color-white;
+            background-color: $color-element-highlight;
+            color: $color-grey-3;
             border-color: $color-element-highlight-darker;
 
             &:hover {

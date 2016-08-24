@@ -78,11 +78,7 @@ class RelatedDescriptorExt(ReverseManyToOneDescriptor):
                         return manager_cls.__get__(instance, cls=cls)
 
                     def __getattr__(self, attr):
-                        print(manager_cls)
-                        if hasattr(manager_cls, '__getattr__'):
-                            return super(manager_cls, self).__getattr__(attr)
-                        else:
-                            raise AttributeError(attr)
+                        return getattr(manager_cls, attr)
 
                 return DescriptorExt
 
@@ -104,35 +100,16 @@ class RelatedManagerExt:
     the given `related_name`.
     """
 
-    def __new__(cls, related_name_or_descriptor):
-        if isinstance(related_name_or_descriptor, str):
-            return cls.__new__(cls, related_name_or_descriptor)
+    def __new__(cls, data):
+        if isinstance(data, Model):
+            new = object.__new__(cls)
+            new.instance = data
+            return new
+        else:
+            return RelatedDescriptorExt(data, cls)
 
-        # We modify the descriptor object to use a new class that inherits from
-        # the
-        descriptor = related_name_or_descriptor
-        return RelatedDescriptorExt(descriptor, cls)
-
-    def __init__(self, related_name):
-        self.related_name = related_name
-        self._queryset = None
-        self._instance = None
-        self.model = None
-
-    def __get__(self, obj, cls=None):
-        if obj is None:
-            return self
-        return self._bound_copy(self._instance)
-
-    def _bound_copy(self, instance):
-        new = object.__new__(type(self))
-        new.__dict__.update(self.__dict__)
-        new._instance = instance
-        new.model = instance.__class__
-        new._queryset = getattr(instance, self.related_name)
-
-    def __getattr__(self, attr):
-        return getattr(self._queryset, attr)
+    def __init__(self, instance):
+        super().__init__(instance)
 
 
 #
@@ -204,9 +181,13 @@ class AbsoluteUrlMixin:
         >>> pages.get_absolute_urls('songs', 'revolution')
         '/artist/john-lennon/songs/revolution'
         """
+
+        # We strip the first element of the url
+        base_url = '/' + self.url_path[1:].partition('/')[-1]
+
         if not urls:
-            return self.url_path
-        url = self.url_path.rstrip('/')
+            return base_url
+        url = base_url.rstrip('/')
         return '%s/%s/' % (url, '/'.join(urls))
 
     def get_admin_url(self, list=False):
@@ -218,3 +199,35 @@ class AbsoluteUrlMixin:
             return '/admin/pages/%s/' % self.id
         return '/admin/pages/%s/edit/' % self.id
 
+    def breadcrumb(self, include_self=False, skip=1, classnames='breadcrumb'):
+        """
+        Return a <ul> element with the links to all parent pages.
+
+        Skip the given number of parent roots, the default skip number is 1.
+        """
+
+        # Get all parent pages in the parents list. We create the list
+        # backwards and reverse it in the end
+        pages = []
+        parent = self
+        if not include_self:
+            parent = self.get_parent()
+
+        while parent:
+            pages.append(parent)
+            parent = parent.get_parent()
+        pages.reverse()
+
+        # Skip roots
+        if skip:
+            pages = pages[skip:]
+
+        # Now let us create the ul element for the breadcrumb
+        lines = ['<ul class="%s">' % classnames]
+        for page in pages:
+            lines.append('  <li><a href="{link}">{name}</a></li>'.format(
+                link=page.get_absolute_url(),
+                name=page.title,
+            ))
+        lines.append('</ul>')
+        return '\n'.join(lines)

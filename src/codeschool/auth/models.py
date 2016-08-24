@@ -1,30 +1,18 @@
 import datetime
 
-from lazyutils import delegate_to
-
+from annoying.functions import get_config
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _, ugettext as __
-
+from lazyutils import delegate_to
 from userena.models import UserenaBaseProfile, UserenaBaseProfileManager
-from annoying.functions import get_config
 
 from codeschool import models
 from codeschool import panels
 from codeschool.models import User
 
 strptime = datetime.datetime.strptime
-
-
-@receiver(post_save, sender=models.User)
-def create_profile_on_user_save(instance, created, **kwargs):
-    user = instance
-    if created and user.username != 'AnonymousUser':
-        profile, _ = Profile.objects.get_or_create(user=user)
-        if get_config('CODESCHOOL_USERNAME_IS_SCHOOL_ID', False):
-            profile.school_id = user.username
-        profile.save()
 
 
 class ProfileQuerySet(models.PageQuerySet):
@@ -185,3 +173,17 @@ class ProfileList(models.ProxyPageMixin, models.SinglePageMixin, models.Page):
     # Wagtail admin
     subpage_types = ['cs_auth.Profile']
     parent_page_types = ['wagtailcore.Page']
+
+
+@receiver(post_save, sender=models.User)
+def create_profile_on_user_save(instance, created, **kwargs):
+    """
+    Create matching profile when users are created.
+    """
+
+    user = instance
+    if created and user.username != 'AnonymousUser':
+        profile, _ = Profile.objects.get_or_create(user=user)
+        if get_config('CODESCHOOL_USERNAME_IS_SCHOOL_ID', False):
+            profile.school_id = user.username
+        profile.save()

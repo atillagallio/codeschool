@@ -83,7 +83,7 @@ body {
     color: #aaa;
     padding: 0.9em 1.2em;
     margin: 0;
-    -webkit-font-smoothing: auto;
+    -webkit-font-smoothing: initial;
 
     img {
         width: 20px;
@@ -124,8 +124,7 @@ footer {
     position: fixed;
     bottom: 0;
     padding: 0.5em;
-    width: 90%;
-    margin: 0 5%;
+    width: 100%;
     color: $color-white;
 
     ul {
@@ -425,11 +424,6 @@ footer,
         }
     }
 
-    footer {
-        width: 80%;
-        margin-left: 50px;
-    }
-
     .content {
         border-top: 0;
         background-color: none;
@@ -444,22 +438,16 @@ footer,
             a,
             span {
                 &:after {
-                    color: $color-element-highlight;
+                    color: $color-white;
                 }
             }
         }
     }
 
-    footer {
-        width: 80%;
-        margin-left: 50px;
-    }
-
-
     // Z-indexes
     .nav-main {
         .footer {
-            z-index: 2;
+            z-index: 10;
         }
     }
 
@@ -474,7 +462,7 @@ footer,
     // Allows overspill of messages banner onto left menu, but also explorer
     // to spill over main content
     .nav-wrapper {
-        z-index: auto;
+        z-index: 10;
     }
 
     // footer is z-index: 100, so ensure the navigation sits on top of it.
@@ -486,10 +474,6 @@ footer,
 @media screen and (min-width: 90em) {
     .wrapper {
         max-width: $breakpoint-desktop-larger;
-    }
-
-    footer {
-        width: 90em;
     }
 }
 

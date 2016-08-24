@@ -13,3 +13,4 @@ from django.dispatch import Signal
 #:         True if grading was performed by the autograder.
 submission_graded_signal = Signal(providing_args=['submission', 'given_grade',
                                                   'automatic'])
+

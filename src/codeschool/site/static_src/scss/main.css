@@ -39,7 +39,7 @@
   src: local("Material Icons"), local("MaterialIcons-Regular"), url("../fonts/material-icons.woff2") format("woff2"); }
 button, input[type="button"], input[type="reset"], input[type="submit"] {
   appearance: none;
-  background-color: #4d8bc0;
+  background-color: #666;
   border: 0;
   border-radius: 3px;
   color: #fff;
@@ -57,13 +57,13 @@ button, input[type="button"], input[type="reset"], input[type="submit"] {
   vertical-align: middle;
   white-space: nowrap; }
   button:hover, button:focus, input[type="button"]:hover, input[type="button"]:focus, input[type="reset"]:hover, input[type="reset"]:focus, input[type="submit"]:hover, input[type="submit"]:focus {
-    background-color: #3e6f9a;
+    background-color: #525252;
     color: #fff; }
   button:disabled, input[type="button"]:disabled, input[type="reset"]:disabled, input[type="submit"]:disabled {
     cursor: not-allowed;
     opacity: 0.5; }
     button:disabled:hover, input[type="button"]:disabled:hover, input[type="reset"]:disabled:hover, input[type="submit"]:disabled:hover {
-      background-color: #4d8bc0; }
+      background-color: #666; }
 
 form ul,
 form li {
@@ -265,8 +265,8 @@ input[type=checkbox]:checked:before {
   font-weight: normal;
   vertical-align: middle;
   display: inline-block;
-  background-color: #00a7a7;
-  border: 1px solid #00a7a7;
+  background-color: #666;
+  border: 1px solid #666;
   color: #fff;
   text-decoration: none;
   text-transform: uppercase;
@@ -370,7 +370,7 @@ input[type=checkbox]:checked:before {
     -webkit-font-smoothing: auto;
     -moz-appearance: none; }
   .button:hover {
-    background-color: #007474;
+    background-color: #4d4d4d;
     color: #fff;
     border-color: transparent; }
     .button:hover.hover-no {
@@ -447,7 +447,7 @@ input[type=checkbox]:checked:before {
   font-size: 0.85em; }
 
 .button-secondary {
-  color: #00a7a7;
+  color: #666;
   background-color: transparent; }
 
 .button.icon.text-replace {
@@ -597,49 +597,41 @@ input[type=reset].flat {
   text-transform: inherit;
   font-weight: bold; }
 
-.form tr,
-form tr {
+table.form tr {
   display: flex;
   flex-flow: column; }
 
-.form td,
-.form th,
-form td,
-form th {
+table.form td,
+table.form th {
   padding: 8px;
   vertical-align: top; }
 
-.form th,
-form th {
+table.form th {
   font-weight: 500;
   color: #333;
   text-align: left;
   padding-bottom: 0;
   min-width: 150px; }
 
-.form td,
-form td {
+table.form td {
   padding-top: 0;
   width: 100%; }
 
-.form textarea,
+table.form textarea,
 form table textarea {
   box-sizing: border-box;
   width: 100%;
   max-width: 600px; }
 
 @media all and (min-width: 750px) {
-  .form tr,
-  form tr {
+  table.form tr {
     display: table-row; }
 
-  .form th,
-  form th {
+  table.form th {
     text-align: right;
     padding-bottom: 8px; }
 
-  .form td,
-  form td {
+  table.form td {
     padding-top: 8px; } }
 /* Form actions */
 .form ul.errorlist,
@@ -748,11 +740,11 @@ p {
   margin: 0 0 10px; }
 
 a {
-  color: #4d8bc0;
+  color: #666;
   text-decoration: none;
   transition: color 150ms ease; }
   a:active, a:focus, a:hover {
-    color: #3a6890; }
+    color: #4d4d4d; }
 
 hr {
   border-bottom: 1px solid #ddd;

@@ -8,6 +8,17 @@ from mommys_boy import mommy, fake
 
 
 @pytest.fixture
+def base_page_location_kwargs():
+    """Define a proper location for the given page in wagtail's tree."""
+
+    return {
+        'path': '1234',
+        'depth': 1,
+        'numchild': 0,
+    }
+
+
+@pytest.fixture
 def sulfur_wait():
     """The value that will be passed to the implicit wait parameter in
     selenium."""

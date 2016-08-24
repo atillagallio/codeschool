@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from difflib import Differ
 
 import ejudge
@@ -12,6 +13,7 @@ from lazyutils import lazy
 from codeschool import models
 from codeschool import panels
 from codeschool.core.models import ProgrammingLanguage, programming_language
+from codeschool.fixes.parent_refresh import register_parent_prefetch
 from codeschool.lms.activities.models.submission import md5hash
 from codeschool.questions.models import Question
 
@@ -19,6 +21,7 @@ differ = Differ()
 
 
 # noinspection PyPropertyAccess,PyArgumentList
+@register_parent_prefetch
 class CodingIoQuestion(Question):
     """
     CodeIo questions evaluate source code and judge them by checking if the
@@ -78,6 +81,9 @@ class CodingIoQuestion(Question):
         ),
     )
 
+    __iospec_updated = False
+    __answers = ()
+
     @lazy
     def iospec(self):
         """
@@ -106,39 +112,29 @@ class CodingIoQuestion(Question):
 
         super().clean()
 
-        # We first should check if the iospec_source has been changed and thus
-        # requires a possibly expensive validation.
+        # We first should check if the iospec_source has been changed and would
+        # require a possibly expensive validation.
         source = self.iospec_source
         iospec_hash = md5hash(source)
         if self.iospec_hash != iospec_hash:
             try:
-                self.iospec = parse_iospec(self.iospec_source)
+                self.iospec = iospec = parse_iospec(self.iospec_source)
             except Exception as ex:
                 raise ValidationError(
                     {'iospec_source': _('invalid iospec syntax: %s' % ex)}
                 )
-                # else:
-                #     self.iospec_hash = iospec_hash
-                #     if self.pk is None:
-                #         self.is_usable = self.iospec.is_simple
-                #         self.is_consistent = True
-                #     else:
-                #         self.is_usable = self._is_usable(self.iospec)
-                #         self.is_consistent = self._is_consistent(self.iospec)
 
-    def _is_usable(self, iospec):
-        """
-        This function is triggered during the clean() validation when a new
-        iospec data is inserted into the database.
-        """
-
-        # Simple iospecs are always valid since they can be compared with
-        # arbitrary programs.
-        if iospec.is_simple_io:
-            return True
-
-        # For now we reject all complex iospec structures
-        return False
+            # Now we check if the new iospec requires an answer key code and
+            # if it has some answer key defined
+            self.__iospec_updated = True
+            return
+            if (not iospec.is_expanded) and not self.answers.has_program():
+                raise ValidationError({'iospec_source': _(
+                    'You iospec definition uses a command or an @input block '
+                    'and thus requires an example grading code. Please define '
+                    'an "Answer Key" item with source code for at least one '
+                    'programming language.'
+                )})
 
     def load_from_markio(self, file_data):
         """
@@ -157,24 +153,27 @@ class CodingIoQuestion(Question):
 
         # Load main description
         # noinspection PyUnresolvedReferences
-        body = [(child.block.name, child.value) for child in self.body]
-        body.extend(markdown_to_blocks(data.description))
-        self.body = body
+        self.body = markdown_to_blocks(data.description)
 
-    def _is_consistent(self, iospec):
-        """
-        This function is triggered during the clean() validation when a new
-        iospec data is inserted into the database.
-        """
-
-        # Simple iospecs always produce consistent answer keys since we prevent
-        # invalid reference programs of being inserted into the database
-        # during AnswerKeyItem validation.
-        if iospec.is_simple_io:
-            return True
-
-        # For now we reject all complex iospec structures
-        return False
+        # Add answer keys
+        answer_keys = OrderedDict()
+        for (lang, answer_key) in data.answer_key.items():
+            language = programming_language(lang)
+            key = self.answers.create(question=self,
+                                      language=language,
+                                      source=answer_key)
+            answer_keys[lang] = key
+        for (lang, placeholder) in data.placeholder.items():
+            if placeholder is None:
+                continue
+            try:
+                answer_keys[lang].placeholder = placeholder
+            except KeyError:
+                language = ProgrammingLanguage.objects.get(lang)
+                self.answer_keys.create(question=self,
+                                        language=language,
+                                        placeholder=placeholder)
+        self.__answers = list(answer_keys.values())
 
     # Serialization methods: support markio and sets it as the default
     # serialization method for CodingIoQuestion's
@@ -196,43 +195,7 @@ class CodingIoQuestion(Question):
                 A question object.
         """
 
-        import markio
-
-        if isinstance(source, markio.Markio):
-            data = source
-        else:
-            data = markio.parse_string(source)
-
-        # Create question object from parsed markio data
-        question = CodingIoQuestion.objects.create(
-            title=data.title,
-            author_name=data.author,
-            timeout=data.timeout,
-            short_description=data.short_description,
-            long_description=data.description,
-            iospec_source=data.tests,
-        )
-
-        # Add answer keys
-        answer_keys = {}
-        for (lang, answer_key) in data.answer_key.items():
-            language = programming_language(lang)
-            key = question.answer_keys.create(language=language,
-                                              source=answer_key)
-            answer_keys[lang] = key
-        for (lang, placeholder) in data.placeholder.items():
-            if placeholder is None:
-                continue
-            try:
-                answer_keys[lang].placeholder = placeholder
-                answer_keys[lang].save(update_fields=['placeholder'])
-            except KeyError:
-                language = ProgrammingLanguage.objects.get(lang)
-                question.answer_keys.create(
-                    language=language,
-                    placeholder=placeholder
-                )
-        return question
+        raise NotImplementedError
 
     def dump_markio(self):
         """
@@ -253,6 +216,11 @@ class CodingIoQuestion(Question):
             tree.add_placeholder(key.placeholder, key.language.ref)
 
         return tree.source()
+
+    def full_clean(self, *args, **kwargs):
+        if self.__answers:
+            self.answers = self.__answers
+        super().full_clean(*args, **kwargs)
 
     def placeholder(self, language=None):
         """
@@ -480,4 +448,5 @@ def markdown_to_blocks(source):
     # html_source = markdown(source)
     # block_list.append(('paragraph', blocks.RichText(html_source)))
     block_list.append(('markdown', source))
+    print(block_list)
     return block_list

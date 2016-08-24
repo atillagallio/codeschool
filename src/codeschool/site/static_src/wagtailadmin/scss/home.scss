@@ -1,4 +1,5 @@
-@import '../variables';
+@import '../../scss/bourbon/bourbon';
+@import '../../scss/base/base';
 @import '../../scss/base/mixins';
 @import 'grid';
 
@@ -81,7 +82,7 @@ header {
         }
 
         label {
-            display: inline-blo;
+            display: inline-block;
         }
 
         input {

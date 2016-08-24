@@ -1,4 +1,4 @@
-{% macro nav_sections(page, session_title=None) %}
+{% macro nav_sections(page, session_title=None, user=None) %}
     <p>
         {% if session_title %}
             {{ session_title }}
@@ -7,6 +7,11 @@
         {% endif %}
     </p>
     <ul>
+        {% if user and user == page.owner %}
+            <li>
+                <a href="{{ page.get_admin_url() }}">{{ _('Edit') }}</a>
+            </li>
+        {% endif %}
         <li>
             <a href="{{ page.get_absolute_url('submissions') }}">{{ _('Submissions') }}</a>
         </li>

@@ -101,7 +101,7 @@ class Activity(AbsoluteUrlMixin, HasScorePage, metaclass=ActivityMeta):
     def clean(self):
         super().clean()
 
-        if not self.author_name:
+        if not self.author_name and self.owner:
             self.author_name = self.owner.get_full_name()
 
     @property

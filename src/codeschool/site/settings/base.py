@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 import os
 
 import codeschool.filters
-import codeschool.site.fixes
+import codeschool.fixes.djinja
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,28 +36,14 @@ INSTALLED_APPS = [
     'codeschool.questions.coding_io',
     'codeschool.questions.form',
     'codeschool.questions',
-    #'codeschool.lms.responses',
     'codeschool.lms.activities',
     'codeschool.lms.gamification',
-    #'codeschool.lms.conditions',
     'codeschool.core',
     'codeschool.auth.apps.AuthConfig',
-    # 'cs_core',
-    # 'cs_messages',
-    # 'cs_pages',
-    # 'cs_search',
-    # 'cs_auth',
-    # 'cs_courses',
-    # 'cs_activities',
-    # 'cs_questions',
-    # 'cs_polls',
-    # 'cs_battles',
-    # 'cs_pbl',
 
     # Related apps
     'model_reference',
     'srvice',
-    # 'viewpack',
 
     # Wagtail and dependencies
     # 'commonblocks',
@@ -348,7 +334,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': '../debug.log',
+            'filename': '.cs-debug.log',
         },
         'console': {
             'level': 'INFO',

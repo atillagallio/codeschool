@@ -56,12 +56,13 @@ setup(
         'fake-factory',
         'factory-boy',
         'mommys_boy',
-        # 'pygments',
+        'gunicorn',
+        'pygments',
+        'python-social-auth',
         # 'frozendict',
         # 'csscompressor',
         # 'html5lib',
         # 'slimit',
-        # 'unidecode',
         # 'pygeneric',
         # 'pytz',
 
@@ -71,8 +72,8 @@ setup(
         'django-model-reference',
         'django-picklefield',
         'django-jsonfield',
-        'django-social-auth',
         'django-annoying',
+        'django-activity-stream',
         #'django-autoslug',
         'django-compressor',
         #'django-extensions',
@@ -123,13 +124,10 @@ setup(
 
     # Scripts
     entry_points={
-        # Register a CLI script for codeschool.
-        # This is the same as executing python -m codeschool
-        # 'console_scripts': ['codeschool = codeschool.__main__:main'],
+        'console_scripts': ['codeschool = codeschool.__main__:main'],
     },
 
     # Other configurations
     zip_safe=False,
     platforms='any',
-    test_suite='%s.test.test_%s' % (name, name),
 )

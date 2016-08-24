@@ -63,7 +63,7 @@ class Question(models.RoutablePageMixin,
         permissions = (("download_question", "Can download question files"),)
 
     EXT_TO_METHOD_CONVERSIONS = {'yml': 'yaml'}
-    OPTIONAL_IMPORT_FIELDS = ['author_name', 'commends', 'score_value',
+    OPTIONAL_IMPORT_FIELDS = ['author_name', 'comments', 'score_value',
                               'star_value']
     base_form_class = QuestionAdminModelForm
 
@@ -170,11 +170,12 @@ class Question(models.RoutablePageMixin,
 
             data = {k: v
                     for k, v in self.__imported_data.items()
-                    if not k.startswith('_') and k not in blacklist and
+                    if (not k.startswith('_')) and k not in blacklist and
                     v not in (None, '')}
 
             for k, v in data.items():
                 setattr(self, k, v)
+
         super().full_clean(*args, **kwargs)
 
     # Serve pages
