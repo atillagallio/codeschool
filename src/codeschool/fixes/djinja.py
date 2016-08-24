@@ -1,6 +1,11 @@
 from djinga.template import DjingaTemplate, ctxt_to_dict, engines
 
 
+#
+# This fixes Djinga rendering so it does not add context processors if request
+# is not given. It is not clear if it is a bug here or in python-social, which
+# defines a context processor that cannot render if a request is not present
+#
 def render(self, context=None, request=None):
     context = ctxt_to_dict(context) if context else {}
 

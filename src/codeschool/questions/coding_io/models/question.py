@@ -331,12 +331,24 @@ class CodingIoQuestion(Question):
     template_submissions = 'questions/coding_io/submissions.jinja2'
 
     def get_context(self, request, *args, **kwargs):
-        return dict(
-            super().get_context(request, *args, **kwargs),
-            form=True,
-            languages=ProgrammingLanguage.supported.all(),
-            default_mode=get_config('CODESCHOOL_DEFAULT_ACE_MODE', 'python'),
-        )
+        context = dict(super().get_context(request, *args, **kwargs),
+                       form=True)
+
+        # Select default mode for the ace editor
+        if self.language:
+            context['default_mode'] = self.language.ace_mode()
+        else:
+            context['default_mode'] = get_config('CODESCHOOL_DEFAULT_ACE_MODE',
+                                                 'python')
+
+        # Enable language selection
+        if self.language is None:
+            context['select_language'] = True
+            context['languages'] = ProgrammingLanguage.supported.all()
+        else:
+            context['select_language'] = False
+
+        return context
 
     @srvice.route(r'^submit-response/$')
     def route_submit(self, client, source=None, language=None, **kwargs):
@@ -386,6 +398,12 @@ class CodingIoQuestion(Question):
         -1,
         panels.InlinePanel('answers', label=_('Answer keys'))
     )
+    settings_panels = Question.settings_panels + [
+        panels.MultiFieldPanel([
+            panels.FieldPanel('language'),
+            panels.FieldPanel('timeout'),
+        ], heading=_('Options'))
+    ]
 
 
 #

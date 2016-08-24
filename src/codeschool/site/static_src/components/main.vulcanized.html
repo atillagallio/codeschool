@@ -14971,9 +14971,7 @@ The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
 The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
---><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic,500,500italic,700,700italic">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700">
-<!--
+--><!--
 @license
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
@@ -26465,6 +26463,10 @@ style this element.
             font-size: 4em;
             display: none;
         }
+
+        #link {
+            text-decoration: none;
+        }
     </style>
 
     <script>
@@ -26606,6 +26608,7 @@ style this element.
                 font: 2.0em 'Amatic SC', cursive;
                 font-weight: bold;
                 color: white;
+                vertical-align: center;
             }
 
         }
@@ -26675,9 +26678,13 @@ style this element.
             <div id="links">
                 <content></content>
             </div>
-            <button id="fabbutton" class="mdl-button mdl-js-button mdl-button--fab mdl-button--colored fab-button" onclick="window.location = '/auth/{{ _accountLink }}/';">
-                {{ _fabLetter }}
-            </button>
+            <paper-menu-button id="fabbutton" class="mdl-button mdl-js-button mdl-button--fab mdl-button--colored fab-button">
+                <span class="dropdown-trigger">{{ _fabLetter }}</span>
+                <paper-menu class="dropdown-content">
+                    <paper-item><a href="/auth/{{ _accountLink }}">Profile</a></paper-item>
+                    <paper-item><a href="/auth/logout/">Logout</a></paper-item>
+                </paper-menu>
+            </paper-menu-button>
         </nav>
     </template>
 
@@ -26708,10 +26715,6 @@ style this element.
                 ready: function () {
                     var elem = this;
                     this._onUsernameChanged(this.username);
-
-                    $(this.$.fabbutton).click(function () {
-                        window.location = '/auth/' + (this._accountLink || 'login');
-                    });
 
                     $(this.$.menubutton).click(function () {
                         var nav = elem.$.nav;
@@ -26822,8 +26825,6 @@ style this element.
             background: #eee;
             padding: 20px 20px 20px 30px;
             flex-grow: 1;
-            min-width: 180px;
-            max-width: 250px;
             color: #222;
         }
 
@@ -27176,6 +27177,14 @@ style this element.
 
                 getTextarea: function() {
                     return this.$.textarea;
+                },
+
+                getMode: function() {
+                    return this.mode;
+                },
+
+                setMode: function(mode) {
+                    this.mode = mode;
                 },
 
                 // Observers

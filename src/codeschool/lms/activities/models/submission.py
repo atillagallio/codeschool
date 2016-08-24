@@ -11,7 +11,7 @@ from markdown import markdown
 
 from codeschool import models
 from codeschool.lms.activities.models import Response
-from codeschool.lms.activities.signals import autograde_signal
+from codeschool.lms.activities.signals import submission_graded_signal
 from .mixins import ResponseDataMixin, FeedbackDataMixin
 
 
@@ -137,6 +137,9 @@ class Submission(ResponseDataMixin,
     manual_override = models.BooleanField(
         default=False
     )
+    points = models.IntegerField(default=0)
+    score = models.IntegerField(default=0)
+    stars = models.FloatField(default=0)
     objects = SubmissionManager()
 
     # Status properties
@@ -159,6 +162,8 @@ class Submission(ResponseDataMixin,
     activity_page_id = delegate_to('response')
     user = delegate_to('response')
     user_id = delegate_to('response')
+    stars_total = delegate_to('activity')
+    points_total = delegate_to('activity')
 
     @classmethod
     def response_data_hash(cls, response_data):
@@ -324,7 +329,7 @@ class Submission(ResponseDataMixin,
                     self.final_grade = self.given_grade
                 self.status = self.STATUS_DONE
                 if not silent:
-                    autograde_signal.send_robust(
+                    submission_graded_signal.send(
                         self.__class__,
                         response_item=self,
                         given_grade=self.given_grade

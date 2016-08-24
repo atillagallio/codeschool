@@ -3,6 +3,7 @@ import json
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
+from lazyutils import lazy_classattribute
 
 from codeschool import blocks
 from codeschool import models
@@ -530,7 +531,70 @@ class Activity(AbsoluteUrlMixin, HasScorePage, metaclass=ActivityMeta):
     # ]
     settings_panels = models.Page.settings_panels + [
         panels.MultiFieldPanel([
-            panels.FieldPanel('points_value'),
-            panels.FieldPanel('stars_value'),
+            panels.FieldPanel('points_total'),
+            panels.FieldPanel('stars_total'),
         ], heading=_('Scores'))
     ]
+
+
+class ScoreDescriptor:
+    def __get__(self, obj, cls=None):
+        if obj is None:
+            return self
+        return ScoreHandler(obj)
+
+
+class ScoreHandler:
+    """
+    Implements the "Activity.score" property.
+
+    This is a manager-like object that handles points and stars associated to an
+    activity.
+    """
+
+    def __init__(self, instance):
+        self.instance = instance
+
+    @lazy_classattribute
+    def _user_score(self):
+        from codeschool.lms.gamification.models import UserScore
+        return UserScore
+
+    @lazy_classattribute
+    def _total_score(self):
+        from codeschool.lms.gamification.models import TotalScore
+        return TotalScore
+
+    def points(self, user):
+        """
+        Number of points associated to user.
+        """
+
+        return self._user_score.load(user, self.instance).points
+
+    def stars(self, user):
+        """
+        Stars associated to user.
+        """
+
+        return self._user_score.load(user, self.instance).stars
+
+    def points_total(self):
+        """
+        Return the total number of points associated with activity.
+        """
+
+        if self.instance.num_child == 0:
+            return self.instance.points_total
+        return self._total_score.load(self.instance).points
+
+    def stars_total(self):
+        """
+        Return the total number of stars associated with activity.
+        """
+
+        if self.instance.num_child == 0:
+            return self.instance.stars_total
+        return self._total_score.load(self.instance).stars
+
+Activity.score = ScoreDescriptor()

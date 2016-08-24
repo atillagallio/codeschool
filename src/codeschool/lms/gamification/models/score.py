@@ -1,9 +1,91 @@
 from collections import Counter
+from time import time
 
 from django.utils.translation import ugettext_lazy as _
 from lazyutils import lazy, lazy_classattribute
 
 from codeschool import models
+
+
+class GivenXpQuerySet(models.QuerySet):
+    pass
+
+
+class _GivenXpManager(models.Manager):
+    def update(self, user, value, token, index=None):
+        """
+        Set user experience points to "points".
+
+        The points must be associated with a token string and (optionally) to
+        an index.  If the token object is a Django model instance, it is
+        interpreted as the object's "app_label.Model" and the index becomes
+        the object's pk.
+        """
+
+        # Fetch token from object.
+        if isinstance(token, models.Model):
+            index = token.pk
+            label = token._meta.app_label
+            class_name = token.__class__.__name__
+            token = "%s.%s" % (label, class_name)
+
+        handler = self.get_or_create(user=user, token=token, index=index)
+        if handler.points != value:
+            handler.points = value
+            handler.save(update_fields=['points'])
+
+GivenXpManager = _GivenXpManager.from_queryset(GivenXpQuerySet)
+
+
+class GivenXp(models.Model):
+    """
+    Handles users experience points.
+    """
+
+    class Meta:
+        unique_together = [('user', 'token', 'index')]
+
+    user = models.ForeignKey(models.User)
+    points = models.IntegerField(default=0)
+    token = models.CharField(max_length=100)
+    index = models.IntegerField(blank=True, null=True)
+    objects = GivenXpManager()
+    _leaderboard_expire_time = time() - 1  # begin at expired state
+
+    @classmethod
+    def total_score(cls, user):
+        """
+        The total Xp points associated to the given user.
+        """
+
+        points = cls.objects.filter(user=user).values_list('points', flat=True)
+        return sum(points)
+
+    @classmethod
+    def leaderboard(cls, force_refresh=False):
+        """
+        Construct the leaderboard from all GivenXp entries.
+
+        The leaderboard is cached and refreshed at most every 5min.
+        """
+
+        if force_refresh or time() <= cls._leaderboard_expire_time:
+            cls._leaderboard_cache = counter = Counter()
+            values = cls.objects\
+                .select_related('user')\
+                .values_list('user', 'points')
+
+            for user, points in values:
+                counter[user] += points
+            cls._leaderboard_expire_time = time() + 5 * 60
+
+        return cls._leaderboard_cache
+
+
+class GlobalAchievement(models.Model):
+    user = models.ForeignKey(models.User)
+    score = models.FloatField()
+    token = models.CharField(max_length=100)
 
 
 class ScoreHandler(models.TimeStampedModel):
@@ -16,7 +98,6 @@ class ScoreHandler(models.TimeStampedModel):
 
     page = models.ForeignKey(models.Page, related_name='+')
     points = models.IntegerField(default=0)
-    score = models.IntegerField(default=0)
     stars = models.FloatField(default=0.0)
 
     @lazy_classattribute
@@ -41,7 +122,7 @@ class ScoreHandler(models.TimeStampedModel):
 
         raise NotImplementedError('must be implemented in subclasses')
 
-    def set_diff(self, points=0, score=0, stars=0, propagate=True, commit=True):
+    def set_diff(self, points=0, stars=0, propagate=True, commit=True):
         """
         Change the given resources by the given amounts and propagate to all
         the parents.
@@ -52,9 +133,6 @@ class ScoreHandler(models.TimeStampedModel):
         if points:
             fields.append('points')
             self.points += points
-        if score:
-            self.score += score
-            fields.append('score')
         if stars:
             self.stars += stars
             fields.append('stars')
@@ -66,10 +144,10 @@ class ScoreHandler(models.TimeStampedModel):
         if propagate and fields and commit:
             parent = self.get_parent()
             if parent is not None:
-                parent.set_diff(points, score, stars, propagate)
+                parent.set_diff(points=points, star=stars, propagate=propagate)
 
-    def set_values(self, points=0, score=0, stars=0, propagate=True,
-                   optimistic=False, commit=True):
+    def set_values(self, points=0, stars=0, propagate=True, optimistic=False,
+                   commit=True):
         """
         Register a new value for the resource.
 
@@ -89,15 +167,13 @@ class ScoreHandler(models.TimeStampedModel):
         """
 
         d_points = points - self.points
-        d_score = score - self.score
         d_stars = stars - self.stars
         if optimistic:
             d_points = max(d_points, 0)
-            d_score = max(d_score, 0)
             d_stars = max(d_stars, 0)
 
-        self.set_diff(points=d_points, score=d_score, stars=d_stars,
-                      propagate=propagate, commit=commit)
+        self.set_diff(points=d_points, stars=d_stars, propagate=propagate,
+                      commit=commit)
 
 
 class TotalScore(ScoreHandler):
@@ -179,13 +255,16 @@ class TotalScore(ScoreHandler):
         return result
 
 
-class UserScores(ScoreHandler):
+class UserScore(ScoreHandler):
     """
     Base class for all accumulated resources.
     """
 
+    class Meta:
+        unique_together = [('user', 'page')]
+
     used_stars = models.FloatField(default=0.0)
-    user = models.OneToOneField(models.User, related_name='+')
+    user = models.ForeignKey(models.User, related_name='+')
 
     @property
     def available_stars(self):
@@ -223,6 +302,25 @@ class UserScores(ScoreHandler):
         """
 
         return cls.objects.get_or_create(user=user, page=cls._wagtail_root)[0]
+
+    @classmethod
+    def leaderboard(cls, page):
+        """
+        Return a (points_counter, starts_counter) pair of Counter() objects
+        representing a leaderboard for the given page.
+        """
+
+        stars_counter, points_counter = Counter(), Counter()
+        values = cls.objects\
+            .filter(page=page)\
+            .select_related('user')\
+            .values_list('user', 'stars', 'points')
+
+        for user, stars, points in values:
+            points_counter[user] += points
+            stars_counter[user] += stars
+
+        return points_counter, stars_counter
 
     def get_parent(self):
         parent_page = self.page.get_parent()
@@ -275,7 +373,7 @@ class HasScorePage(models.Page):
     }
     DEFAULT_DIFFICULTY = DIFFICULTY_REGULAR
 
-    points_value = models.IntegerField(
+    points_total = models.IntegerField(
         _('value'),
         blank=True,
         help_text=_(
@@ -284,7 +382,7 @@ class HasScorePage(models.Page):
             'ranking system.'
         )
     )
-    stars_value = models.FloatField(
+    stars_total = models.FloatField(
         _('stars'),
         blank=True,
         help_text=_(
@@ -303,7 +401,7 @@ class HasScorePage(models.Page):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not kwargs:
-            self._score_memo = self.points_value, self.stars_value
+            self._score_memo = self.points_total, self.stars_total
 
     def clean_fields(self, exclude=None):
         # Fill default difficulty
@@ -312,25 +410,21 @@ class HasScorePage(models.Page):
                 self.difficulty = self.DEFAULT_DIFFICULTY
 
         # Fill default points value from difficulty
-        if self.points_value is None:
+        if self.points_total is None:
             if exclude is None or 'exclude' not in exclude:
-                self.points_value = self.SCORE_FROM_DIFFICULTY[self.difficulty]
+                self.points_total = self.SCORE_FROM_DIFFICULTY[self.difficulty]
 
         super().clean_fields(exclude=exclude)
 
     def save(self, *args, **kwargs):
-        points, stars = getattr(self, '_score_memo', (0, 0))
+        scores = getattr(self, '_score_memo', (0, 0))
         super().save(*args, **kwargs)
 
         # Update the ScoreTotals table, if necessary.
-        if stars != self.stars_value or points != self.points_value:
-            score = self.get_score_from_points(self.points_value)
-            TotalScore.update(
-                self,
-                points=self.points_value,
-                stars=self.stars_value,
-                score=score,
-            )
+        if scores != (self.points_total, self.stars_total):
+            points = self.points_total
+            stars = self.stars_total
+            TotalScore.update(self, points=points, stars=stars)
 
     def get_score_contributions(self):
         """
@@ -339,17 +433,6 @@ class HasScorePage(models.Page):
         """
 
         return {
-            'points': self.points_value,
-            'stars': self.stars_value,
-            'score': self.get_score_from_points(self.points_value),
+            'points': self.points_total,
+            'stars': self.stars_total,
         }
-
-    def get_score_from_points(self, points):
-        """
-        Compute score value from total number of points.
-
-        The default implementation simply return the argument. Business logic
-        may require a different relationship between score and point values.
-        """
-        return points
-

@@ -1,6 +1,6 @@
 @import '../variables';
-@import '../../../scss/base/mixins';
-@import '../grid';
+@import '../../scss/base/mixins';
+@import 'grid';
 
 header {
     .col1 {
@@ -53,7 +53,7 @@ header {
         }
 
         span {
-            font-family: $font-serif;
+            font-family: $amatic-sc;
             display: block;
             font-size: 4em;
             line-height: 1em;

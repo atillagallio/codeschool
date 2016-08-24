@@ -1,0 +1,13 @@
+#points-dashboard {
+    float: right;
+    background: rgba(0, 0, 0, 0.01);
+
+    tr > :first-child {
+        text-align: right;
+    }
+
+    tr.points > :first-child {
+        font-size: 2.0em;
+    }
+
+}

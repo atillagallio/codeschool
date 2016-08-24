@@ -66,6 +66,7 @@ class Response(models.CopyMixin,
     user = models.ForeignKey(
         models.User,
         related_name='responses',
+        on_delete=models.CASCADE,
     )
     activity_page = models.ForeignKey(
         models.Page,
@@ -91,6 +92,8 @@ class Response(models.CopyMixin,
     given_points = models.IntegerField(default=0)
     given_score = models.IntegerField(default=0)
     given_stars = models.FloatField(default=0.0)
+    is_finished = models.BooleanField(default=bool)
+    is_correct = models.BooleanField(default=bool)
 
     #: The number of submissions in the current session.
     num_submissions = property(lambda x: x.submissions.count())
@@ -106,10 +109,10 @@ class Response(models.CopyMixin,
     objects = ResponseManager()
 
     @classmethod
-    def get_response(cls, user, activity, context=None):
+    def _get_response(cls, user, activity):
         """
         Return the response object associated with the given
-        user/activity/context.
+        user/activity.
 
         Create a new response object if it does not exist.
         """
@@ -120,7 +123,7 @@ class Response(models.CopyMixin,
             )
 
         response, create = Response.objects.get_or_create(
-            user=user, activity=activity, context=context
+            user=user, activity=activity
         )
         return response
 
@@ -167,7 +170,7 @@ class Response(models.CopyMixin,
                 self.save(update_fields=['final_grade'])
             self.__updated = True
 
-    def update_for_submission(self, submission):
+    def register_submission(self, submission):
         """
         Called when new submissions are sent or auto-graded.
         """

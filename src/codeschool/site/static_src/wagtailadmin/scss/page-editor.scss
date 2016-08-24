@@ -1,7 +1,8 @@
-@import '../variables';
-@import '../../../scss/base/mixins';
-@import '../grid';
-@import '../components/streamfield';
+@import '../../scss/bourbon/bourbon';
+@import '../../scss/base/base';
+@import '../../scss/base/mixins';
+@import 'grid';
+@import 'components/streamfield';
 
 .page-editor {
     .content-wrapper {
@@ -87,10 +88,10 @@
         background: $color-salmon-light;
         text-transform: uppercase;
         padding: 0.9em 0 0.9em 4.1em;
-        font-size: 0.95em;
+        font-size: 1.8em;
         margin: 0 0 0.2em;
         line-height: 1.5em;
-        font-weight: normal;
+        font-weight: bold;
         position: absolute;
         top: 0;
         left: 0;

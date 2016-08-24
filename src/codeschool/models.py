@@ -192,7 +192,6 @@ class AbsoluteUrlMixin:
     """
     Adds a get_absolute_url() method to a Page object.
     """
-    url = None
 
     def get_absolute_url(self, *urls):
         """
@@ -206,8 +205,8 @@ class AbsoluteUrlMixin:
         '/artist/john-lennon/songs/revolution'
         """
         if not urls:
-            return self.url
-        url = self.url.rstrip('/')
+            return self.url_path
+        url = self.url_path.rstrip('/')
         return '%s/%s/' % (url, '/'.join(urls))
 
     def get_admin_url(self, list=False):

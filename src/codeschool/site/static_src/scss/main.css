@@ -1388,6 +1388,14 @@ code {
   .codehilite .vi {
     color: #19177C; }
 
+#points-dashboard {
+  float: right;
+  background: rgba(0, 0, 0, 0.01); }
+  #points-dashboard tr > :first-child {
+    text-align: right; }
+  #points-dashboard tr.points > :first-child {
+    font-size: 2.0em; }
+
 main, nav, div, article, section, aside {
   margin: 0;
   padding: 0; }

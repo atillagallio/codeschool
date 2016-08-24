@@ -1,0 +1,23 @@
+# Cached builds
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
+*.egg
+*.egg-info/
+
+# Build directories
+doc/_build/
+build/
+dist/
+collect/
+db/
+node_modules/
+src/codeschool/site/bower/
+.cache/
+.gitignore
+.idea/
+docs/_build/
+docker-image/

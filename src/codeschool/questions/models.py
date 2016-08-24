@@ -237,8 +237,11 @@ class Question(models.RoutablePageMixin,
 
     # Wagtail admin
     subpage_types = []
-    content_panels = models.ShortDescriptionPageMixin.content_panels + [
-        panels.FieldPanel('import_file'),
+    content_panels = models.ShortDescriptionPageMixin.content_panels[:-1] + [
+        panels.MultiFieldPanel([
+            panels.FieldPanel('import_file'),
+            panels.FieldPanel('short_description'),
+        ], heading=_('Options')),
         panels.StreamFieldPanel('body'),
         panels.MultiFieldPanel([
             panels.FieldPanel('author_name'),
